@@ -1,0 +1,104 @@
+<!doctype html>
+<!--
+  Pagina pubblica per il tasto «Aggiungi a Calendario Apple» delle email: i programmi di posta
+  tolgono i link webcal://, quindi l'email punta qui in https e questa pagina apre webcal://.
+  Non contiene dati: l'indirizzo del calendario arriva nel parametro ?ics= ed è accettato solo
+  se è un file .ics di un Gist (gist.githubusercontent.com).
+  Sorgente in Turni/pagina_apple/, pubblicata con GitHub Pages nel repo pubblico turni-calendario.
+-->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>Calendario dei turni</title>
+<style>
+  :root {
+    color-scheme: light;
+    --carta: #f6f4ee; --foglio: #fffdf8; --inchiostro: #1f1d1a; --grafite: #6a655c;
+    --filo: #e5e0d5; --accento: #2f5446; --su-accento: #fffdf8; --errore: #9b3b2f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --carta: #141412; --foglio: #1b1a17; --inchiostro: #ebe6dc; --grafite: #a49e92;
+      --filo: #302e29; --accento: #9ccab4; --su-accento: #10201a; --errore: #e59a8c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px; background: var(--carta); color: var(--inchiostro);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  main {
+    max-width: 34rem; margin: 0 auto; padding: 24px; background: var(--foglio);
+    border: 1px solid var(--filo); border-radius: 6px;
+  }
+  h1 { margin: 0 0 12px; font: 600 1.5rem/1.2 ui-serif, "Iowan Old Style", Charter, Georgia, serif; }
+  p { margin: 0 0 12px; }
+  .piccolo { color: var(--grafite); font-size: .9rem; }
+  .errore { color: var(--errore); }
+  .tasto {
+    display: inline-block; margin: 4px 0 16px; padding: 12px 20px; border: 0; border-radius: 6px;
+    background: var(--accento); color: var(--su-accento); font: inherit; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .secondario { margin: 0; padding: 8px 14px; background: transparent; color: var(--accento);
+    border: 1px solid var(--accento); }
+  code {
+    display: block; margin: 8px 0; padding: 8px 10px; border: 1px solid var(--filo); border-radius: 6px;
+    font-size: .85rem; overflow-wrap: anywhere;
+  }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Calendario dei turni</h1>
+  <noscript><p class="errore">Per aggiungere il calendario da questa pagina serve JavaScript.
+    Usa le istruzioni manuali nell'email.</p></noscript>
+  <div id="valido" hidden>
+    <p>Sto aprendo Calendario. Conferma l'iscrizione per vedere i tuoi turni.</p>
+    <a class="tasto" id="apri" href="#">Aggiungi a Calendario Apple</a>
+    <p class="piccolo">Se non succede nulla e la pagina si è aperta dentro l'app di posta,
+      aprila in Safari e premi di nuovo il tasto.</p>
+    <p class="piccolo">In alternativa: Impostazioni › Calendario › Account › Aggiungi account ›
+      Altro › Aggiungi calendario sottoscritto, e incolla questo indirizzo:</p>
+    <code id="indirizzo"></code>
+    <button class="tasto secondario" id="copia" type="button" hidden>Copia indirizzo</button>
+    <p class="piccolo" id="esito" role="status"></p>
+  </div>
+  <p class="errore" id="non-valido" hidden>Link non valido: usa il tasto nell'email che hai ricevuto.</p>
+</main>
+<script>
+  "use strict";
+  const indirizzo = new URLSearchParams(location.search).get("ics") || "";
+  const gist = /^https:\/\/gist\.githubusercontent\.com\/[A-Za-z0-9-]+\/[0-9a-f]{20,40}\/raw\/[A-Za-z0-9._~%-]+\.ics$/;
+  if (gist.test(indirizzo)) {
+    const webcal = "webcal://" + indirizzo.slice("https://".length);
+    document.getElementById("apri").href = webcal;
+    document.getElementById("indirizzo").textContent = indirizzo;
+    document.getElementById("valido").hidden = false;
+    const copia = document.getElementById("copia");
+    if (navigator.clipboard?.writeText) {
+      copia.hidden = false;
+      copia.addEventListener("click", async () => {
+        const esito = document.getElementById("esito");
+        try {
+          await navigator.clipboard.writeText(indirizzo);
+          esito.textContent = "Indirizzo copiato.";
+        } catch {
+          esito.textContent = "Copia non riuscita: tieni premuto sull'indirizzo per copiarlo.";
+        }
+      });
+    }
+    location.href = webcal;
+  } else {
+    document.getElementById("non-valido").hidden = false;
+  }
+</script>
+</body>
+</html>
